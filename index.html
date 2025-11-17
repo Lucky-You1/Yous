@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>💓 Your gift</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #fff;
+            touch-action: manipulation;
+            font-family: "楷体", "KaiTi", serif;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* 引导弹框 */
+        .guide-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 350px;
+            padding: 25px 20px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            z-index: 10000;
+            text-align: center;
+        }
+        .guide-popup p {
+            font-size: 18px;
+            color: #333;
+            margin: 0 0 20px 0;
+            line-height: 1.5;
+        }
+        .guide-btn {
+            padding: 10px 30px;
+            background: #ff8ba7;
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 80%;
+            max-width: 220px;
+            display: block;
+            margin: 0 auto;
+        }
+        .guide-btn:active {
+            background: #ff6b8f;
+            transform: scale(0.98);
+        }
+
+        /* 卡片样式 - 初始整齐 */
+        .popup {
+            position: fixed;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #333;
+            z-index: 9999;
+            transition: all 2.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            white-space: nowrap;
+            text-align: center;
+            line-height: 1.3;
+            transform-origin: center;
+        }
+
+        /* 爱心中心文字 */
+        .heart-center-text {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 26px;
+            color: #ff6b8f;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+            z-index: 9998;
+            text-shadow: 0 2px 8px rgba(255, 107, 143, 0.3);
+            text-align: center;
+            font-weight: bold;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 0.9;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 引导弹框 -->
+    <div class="guide-popup" id="guidePopup">
+        <p>你收到一份神秘礼物！确定打开吗？</p>
+        <button class="guide-btn" id="startBtn">确定！</button>
+    </div>
+
+    <!-- 爱心中心文字 -->
+    <div class="heart-center-text" id="heartCenterText"></div>
+
+    <script>
+        const baseTips = [
+            "好好吃饭 💓",
+            "多喝温水 💓",
+            "天冷加衣 💓",
+            "别熬夜 💓",
+            "吃水果 💓",
+            "累了歇会 💓",
+            "出门带伞 💓",
+            "早点休息 💓",
+            "按时早餐 💓",
+            "少看手机 💓",
+            "走路慢点 💓",
+            "睡前泡脚 💓",
+            "别吃太凉 💓",
+            "保持开心 💓",
+            "工作别累 💓",
+            "多出去走 💓",
+            "记得防晒 💓",
+            "饭要趁热 💓",
+            "别给自己压力 💓",
+            "注意保暖 💓",
+        ];
+        
+        const bgColors = [
+            "lightpink",
+            "skyblue",
+            "lightgreen",
+            "lavender",
+            "lightyellow",
+            "plum",
+            "coral",
+            "bisque",
+            "aquamarine",
+            "mistyrose",
+        ];
+        
+        let centerX, centerY;
+        let popups = [];
+        const heartCenterText = document.getElementById("heartCenterText");
+
+        // 更新中心坐标
+        function updateCenter() {
+            centerX = window.innerWidth / 2;
+            centerY = window.innerHeight / 2;
+        }
+
+        // 生成爱心坐标 - 放大爱心
+        function generateHeartPoints(count) {
+            const points = [];
+            const screenSize = Math.min(window.innerWidth, window.innerHeight);
+            const heartSize = screenSize * 0.35; // 增大爱心尺寸到35%
+            
+            // 生成基础爱心形状
+            for (let t = 0; t < 2 * Math.PI; t += 2 * Math.PI / count) {
+                const x = 16 * Math.pow(Math.sin(t), 3);
+                const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+                
+                const scaledX = centerX + x * heartSize / 16;
+                const scaledY = centerY - y * heartSize / 16;
+                
+                // 添加随机偏移，使爱心边缘不规则
+                const randomOffsetX = (Math.random() - 0.5) * 15;
+                const randomOffsetY = (Math.random() - 0.5) * 15;
+                
+                // 随机旋转角度（-25度到25度）
+                const rotation = (Math.random() - 0.5) * 50;
+                
+                points.push({
+                    x: scaledX + randomOffsetX,
+                    y: scaledY + randomOffsetY,
+                    rotation: rotation
+                });
+            }
+            
+            return points;
+        }
+
+        // 生成卡片 - 初始整齐（无旋转）
+        function createPopup() {
+            const popup = document.createElement("div");
+            popup.className = "popup";
+            popup.textContent = baseTips[Math.floor(Math.random() * baseTips.length)];
+            popup.style.backgroundColor = bgColors[Math.floor(Math.random() * bgColors.length)];
+
+            const screenWidth = window.innerWidth;
+            const screenHeight = window.innerHeight;
+            const popupWidth = 90;
+            const popupHeight = 40;
+
+            // 初始位置限制在屏幕内
+            const x = Math.random() * (screenWidth - popupWidth - 60) + 30;
+            const y = Math.random() * (screenHeight - popupHeight - 60) + 30;
+
+            // 初始状态保持整齐（无旋转）
+            popup.style.transform = 'rotate(0deg)';
+            popup.style.left = `${x}px`;
+            popup.style.top = `${y}px`;
+            popup.style.animation = "fadeIn 0.8s ease-out";
+
+            document.body.appendChild(popup);
+            return popup;
+        }
+
+        // 汇聚到中心爱心 - 在汇聚时添加不规则角度
+        function gatherToHeart() {
+            const heartPoints = generateHeartPoints(popups.length);
+
+            popups.forEach((popup, index) => {
+                const targetPoint = heartPoints[index];
+                
+                // 随机延迟，使汇聚更有层次感
+                const randomDelay = Math.random() * 600;
+                
+                setTimeout(() => {
+                    // 在移动到目标位置的同时缩小卡片并添加旋转
+                    popup.style.transition = 'all 3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    popup.style.padding = '6px 10px';
+                    popup.style.fontSize = '10px';
+                    popup.style.borderRadius = '8px';
+                    popup.style.boxShadow = '0 1px 4px rgba(0, 0, 0, 0.1)';
+                    
+                    const popupWidth = 70;
+                    const popupHeight = 30;
+                    
+                    const targetX = targetPoint.x - popupWidth / 2;
+                    const targetY = targetPoint.y - popupHeight / 2;
+                    
+                    // 应用位置和旋转（只在汇聚时添加旋转）
+                    popup.style.left = `${targetX}px`;
+                    popup.style.top = `${targetY}px`;
+                    popup.style.transform = `rotate(${targetPoint.rotation}deg) scale(0.85)`;
+                    
+                }, index * 35 + randomDelay);
+            });
+
+           
+        }
+
+        // 完整流程
+        function startProcess() {
+            document.getElementById("guidePopup").style.display = "none";
+            popups = [];
+            
+            updateCenter();
+
+            const screenSize = Math.min(window.innerWidth, window.innerHeight);
+            const cardCount = Math.min(150, Math.floor(screenSize / 2)); // 增加卡片数量以适应更大的爱心
+            
+            // 创建卡片（保持整齐）- 减慢生成速度
+            for (let i = 0; i < cardCount; i++) {
+                setTimeout(() => {
+                    const popup = createPopup();
+                    popups.push(popup);
+                }, i * 70); // 减慢生成速度：从40ms增加到80ms
+            }
+
+            const totalGenerateTime = cardCount * 70;
+            setTimeout(gatherToHeart, totalGenerateTime + 1000);
+        }
+
+        // 绑定按钮事件
+        document.addEventListener("DOMContentLoaded", () => {
+            updateCenter();
+            
+            const startBtn = document.getElementById("startBtn");
+            startBtn.addEventListener("click", startProcess);
+            startBtn.addEventListener("touchstart", (e) => {
+                e.preventDefault();
+                startProcess();
+            });
+        });
+
+        // 窗口缩放时重新调整
+        window.addEventListener("resize", () => {
+            updateCenter();
+            
+            if (popups.length > 0 && document.getElementById("guidePopup").style.display === "none") {
+                gatherToHeart();
+            }
+        });
+    </script>
+</body>
+</html>
